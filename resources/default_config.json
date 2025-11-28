@@ -1,0 +1,12 @@
+{
+  "music_output_dir": "",
+  "video_output_dir": "",
+  "open_kid3_after_download": false,
+  "kid3_path": "kid3",
+  "gotify_enabled": false,
+  "gotify_url": "",
+  "gotify_token": "",
+  "playlist_monitor_enabled": false,
+  "playlist_monitor_interval": 60,
+  "follow_playlists": {}
+}
