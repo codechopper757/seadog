@@ -1,12 +1,11 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox
 from utils.config import ConfigManager
 
 class SettingsTab(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.config = ConfigManager()
-
         layout = QVBoxLayout()
 
         # Music output directory
@@ -33,8 +32,6 @@ class SettingsTab(QWidget):
         layout.addWidget(self.save_btn)
 
         self.setLayout(layout)
-
-        # Load current config values into GUI
         self.load_settings()
 
     def load_settings(self):

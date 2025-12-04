@@ -1,58 +1,50 @@
-import subprocess
-import threading
+from engine.downloader import Downloader
 from utils.config import ConfigManager
 
 class MusicController:
     def __init__(self):
         self.config = ConfigManager()
-        self.current_process = None
+        self.downloader = Downloader()
+        self.current_thread = None
 
-    def download_music(self, url, output_dir=None, open_kid3=False, progress_callback=None):
-        """Download music in a background thread."""
-        thread = threading.Thread(
-            target=self._download_thread,
-            args=(url, output_dir, open_kid3, progress_callback),
-            daemon=True
-        )
-        thread.start()
-        return thread
-
-    def _download_thread(self, url, output_dir, open_kid3, progress_callback):
+    def start_download(self, url, output_dir=None, open_kid3=False, progress_callback=None, finished_callback=None):
+        """
+        Starts a background download using Downloader.
+        """
         if output_dir is None or output_dir.strip() == "":
             output_dir = self.config.get("music_output_dir")
 
-        subprocess.run(["mkdir", "-p", output_dir])
+        # Playlist delay from config (default 0)
+        delay = self.config.get("playlist_delay", 0)
 
-        cmd = [
-            "yt-dlp",
-            "-x",
-            "--audio-format", "mp3",
-            "--embed-thumbnail",
-            "--embed-metadata",
-            "--add-metadata",
-            "-o", f"{output_dir}/%(playlist_index)s - %(title)s.%(ext)s",
-            url
-        ]
-
-        if progress_callback:
-            progress_callback(f"Starting download: {url}")
-
-        self.current_process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        # Threaded download
+        self.current_thread = self.downloader.download(
+            url=url,
+            out_dir=output_dir,
+            mode="audio",
+            delay=delay,
+            status_callback=progress_callback,
+            finished_callback=lambda ok: self._on_finished(ok, output_dir, open_kid3, finished_callback)
         )
+        return self.current_thread
 
-        for line in self.current_process.stdout:
-            if progress_callback:
-                progress_callback(line.strip())
+    def cancel_download(self):
+        """Stop any ongoing download."""
+        self.downloader.stop()
 
-        self.current_process.wait()
-        self.current_process = None
-
-        if self.current_process is None:  # Normal termination
-            if self.current_process and open_kid3:
-                kid3_path = self.config.get("kid3_path", "kid3")
+    # -----------------
+    # Internal helper
+    # -----------------
+    def _on_finished(self, success, output_dir, open_kid3, user_finished_callback):
+        if open_kid3 and success:
+            # open kid3 for the downloaded folder
+            kid3_path = self.config.get("kid3_path", "kid3")
+            try:
+                import subprocess
                 subprocess.Popen([kid3_path, output_dir])
-                if progress_callback:
-                    progress_callback("Opened Kid3 for editing metadata.")
-            elif progress_callback:
-                progress_callback("Download finished successfully.")
+            except Exception as e:
+                print(f"Failed to open Kid3: {e}")
+
+        # propagate to GUI if needed
+        if user_finished_callback:
+            user_finished_callback(success)

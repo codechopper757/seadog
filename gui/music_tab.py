@@ -1,102 +1,105 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
-    QFileDialog, QTextEdit, QMessageBox
-)
+from PyQt5 import QtWidgets, QtCore
 from controllers.music_controller import MusicController
 from utils.config import ConfigManager
-import validators  # pip install validators
+import os
 
-class MusicTab(QWidget):
-    def __init__(self):
-        super().__init__()
+class MusicTab(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        self.config = ConfigManager()
+        # Controller & config
         self.controller = MusicController()
-        self.current_thread = None
+        self.config = ConfigManager()
 
-        layout = QVBoxLayout()
+        # Layout
+        layout = QtWidgets.QVBoxLayout(self)
 
         # URL input
-        layout.addWidget(QLabel("YouTube URL:"))
-        self.url_input = QLineEdit()
+        self.url_input = QtWidgets.QLineEdit(self)
+        self.url_input.setPlaceholderText("Enter YouTube URL or playlist")
+        layout.addWidget(QtWidgets.QLabel("URL:"))
         layout.addWidget(self.url_input)
 
         # Output directory
-        layout.addWidget(QLabel("Output Directory:"))
-        self.output_dir_btn = QPushButton()
-        self.output_dir_btn.clicked.connect(self.select_directory)
-        layout.addWidget(self.output_dir_btn)
+        self.dir_input = QtWidgets.QLineEdit(self)
+        self.dir_input.setPlaceholderText("Select output directory")
+        self.dir_input.setText(self.config.get("music_output_dir", os.path.expanduser("~/Music")))
+        layout.addWidget(QtWidgets.QLabel("Output Directory:"))
+        layout.addWidget(self.dir_input)
 
-        # Kid3 optional checkbox
-        self.kid3_checkbox = QCheckBox("Open Kid3 after download")
+        self.dir_button = QtWidgets.QPushButton("Browse...")
+        self.dir_button.clicked.connect(self.browse_directory)
+        layout.addWidget(self.dir_button)
+
+        # Kid3 checkbox
+        self.kid3_checkbox = QtWidgets.QCheckBox("Open Kid3 after download")
+        self.kid3_checkbox.setChecked(True)
         layout.addWidget(self.kid3_checkbox)
 
-        # Download / Cancel buttons
-        self.download_btn = QPushButton("Download Music")
-        self.download_btn.clicked.connect(self.start_download)
-        layout.addWidget(self.download_btn)
+        # Start / Cancel buttons
+        self.start_button = QtWidgets.QPushButton("Start Download")
+        self.start_button.clicked.connect(self.start_download)
+        self.cancel_button = QtWidgets.QPushButton("Cancel Download")
+        self.cancel_button.clicked.connect(self.cancel_download)
+        layout.addWidget(self.start_button)
+        layout.addWidget(self.cancel_button)
 
-        self.cancel_btn = QPushButton("Cancel Download")
-        self.cancel_btn.clicked.connect(self.cancel_download)
-        self.cancel_btn.setEnabled(False)
-        layout.addWidget(self.cancel_btn)
-
-        # Log output
-        self.log_output = QTextEdit()
-        self.log_output.setReadOnly(True)
-        layout.addWidget(self.log_output)
+        # Status output
+        self.status_output = QtWidgets.QTextEdit()
+        self.status_output.setReadOnly(True)
+        layout.addWidget(QtWidgets.QLabel("Status:"))
+        layout.addWidget(self.status_output)
 
         self.setLayout(layout)
 
-        # Initialize output directory from config
-        self.output_dir_btn.setText(self.config.get("music_output_dir", ""))
-
-    def select_directory(self):
-        dir_path = QFileDialog.getExistingDirectory(self, "Select Output Directory")
+    # -----------------
+    # Callbacks / slots
+    # -----------------
+    def browse_directory(self):
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Directory")
         if dir_path:
-            self.output_dir_btn.setText(dir_path)
-
-    def log(self, message):
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_output.append(f"[{timestamp}] {message}")
-        self.log_output.verticalScrollBar().setValue(self.log_output.verticalScrollBar().maximum())
+            self.dir_input.setText(dir_path)
 
     def start_download(self):
         url = self.url_input.text().strip()
-        output_dir = self.output_dir_btn.text()
+        out_dir = self.dir_input.text().strip()
         open_kid3 = self.kid3_checkbox.isChecked()
 
         if not url:
-            self.log("Please enter a URL.")
+            QtWidgets.QMessageBox.warning(self, "Error", "Please enter a URL.")
             return
 
-        if not validators.url(url):
-            self.log("Invalid URL format.")
-            return
+        # Disable start button to prevent multiple downloads
+        self.start_button.setEnabled(False)
+        self.status_output.clear()
+        self.append_status(f"Starting download: {url}")
 
-        # Disable download button, enable cancel
-        self.download_btn.setEnabled(False)
-        self.cancel_btn.setEnabled(True)
-
-        # Start download in background
-        self.current_thread = self.controller.download_music(
+        # Start threaded download
+        self.controller.start_download(
             url=url,
-            output_dir=output_dir,
+            output_dir=out_dir,
             open_kid3=open_kid3,
-            progress_callback=self.thread_log
+            progress_callback=self.append_status,
+            finished_callback=self.download_finished
         )
 
     def cancel_download(self):
-        if self.controller.current_process:
-            self.controller.current_process.terminate()
-            self.log("Download cancelled.")
-        self.download_btn.setEnabled(True)
-        self.cancel_btn.setEnabled(False)
+        self.controller.cancel_download()
+        self.append_status("Download cancelled by user.")
+        self.start_button.setEnabled(True)
 
-    def thread_log(self, message):
-        self.log(message)
-        # Re-enable buttons when finished
-        if "finished" in message.lower() or "failed" in message.lower() or "cancelled" in message.lower():
-            self.download_btn.setEnabled(True)
-            self.cancel_btn.setEnabled(False)
+    def append_status(self, msg):
+        # Thread-safe appending
+        QtCore.QMetaObject.invokeMethod(
+            self.status_output,
+            "append",
+            QtCore.Qt.QueuedConnection,
+            QtCore.Q_ARG(str, msg)
+        )
+
+    def download_finished(self, success):
+        if success:
+            self.append_status("Download completed successfully!")
+        else:
+            self.append_status("Download finished with errors or cancelled.")
+        self.start_button.setEnabled(True)
