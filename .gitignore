@@ -5,4 +5,4 @@ __pycache__/
 .env
 *.sqlite3
 *.log
-congig.json
+config.json
