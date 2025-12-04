@@ -1,4 +1,4 @@
 {
-    "gotify_url": "https://your.gotify.server",
-    "gotify_token": "YOUR_APP_TOKEN"
+    "gotify_url": "https://192.168.0.161:8098",
+    "gotify_token": "AmgN5eEpPyC3Z2l"
 }
