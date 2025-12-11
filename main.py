@@ -1,7 +1,12 @@
+import sys
+import qdarkstyle
+
+
 from PyQt5 import QtWidgets
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     # Import tabs AFTER QApplication exists
     from gui.music_tab import MusicTab
@@ -33,7 +38,6 @@ def main():
 
     window.show()
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
