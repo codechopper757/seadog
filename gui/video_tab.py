@@ -1,92 +1,145 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QCheckBox, QFileDialog, QTextEdit,
+    QGroupBox, QStyle, QProgressBar
+)
+from PyQt5 import QtCore
 from controllers.video_controller import VideoController
 from utils.config import ConfigManager
 import os
 
-class VideoTab(QtWidgets.QWidget):
+
+class VideoTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Controller & config
         self.controller = VideoController()
         self.config = ConfigManager()
 
-        # Layout
-        layout = QtWidgets.QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(15)
 
-        # URL input
-        self.url_input = QtWidgets.QLineEdit(self)
-        self.url_input.setPlaceholderText("Enter YouTube URL or playlist")
-        layout.addWidget(QtWidgets.QLabel("URL:"))
-        layout.addWidget(self.url_input)
+        # =========================
+        # Source
+        # =========================
+        source_group = QGroupBox("Source")
+        source_layout = QVBoxLayout()
 
-        # Output directory
-        self.dir_input = QtWidgets.QLineEdit(self)
-        self.dir_input.setPlaceholderText("Select output directory")
-        self.dir_input.setText(self.config.get("video_output_dir", os.path.expanduser("~/Videos")))
-        layout.addWidget(QtWidgets.QLabel("Output Directory:"))
-        layout.addWidget(self.dir_input)
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("YouTube URL or playlist")
 
-        self.dir_button = QtWidgets.QPushButton("Browse...")
-        self.dir_button.clicked.connect(self.browse_directory)
-        layout.addWidget(self.dir_button)
+        source_layout.addWidget(QLabel("URL:"))
+        source_layout.addWidget(self.url_input)
+        source_group.setLayout(source_layout)
+        main_layout.addWidget(source_group)
 
-        # Gotify notification checkbox
-        self.gotify_checkbox = QtWidgets.QCheckBox("Send Gotify notification when done")
+        # =========================
+        # Output
+        # =========================
+        output_group = QGroupBox("Output")
+        output_layout = QHBoxLayout()
+
+        self.dir_input = QLineEdit()
+        self.dir_input.setText(
+            self.config.get("video_output_dir", os.path.expanduser("~/Videos"))
+        )
+
+        browse_btn = QPushButton("Browse")
+        browse_btn.setIcon(self.style().standardIcon(QStyle.SP_DirOpenIcon))
+        browse_btn.clicked.connect(self.browse_directory)
+
+        output_layout.addWidget(self.dir_input)
+        output_layout.addWidget(browse_btn)
+        output_group.setLayout(output_layout)
+        main_layout.addWidget(output_group)
+
+        # =========================
+        # Options
+        # =========================
+        options_group = QGroupBox("Options")
+        options_layout = QVBoxLayout()
+
+        self.gotify_checkbox = QCheckBox("Send Gotify notification on completion")
         self.gotify_checkbox.setChecked(True)
-        layout.addWidget(self.gotify_checkbox)
 
-        # Start / Cancel buttons
-        self.start_button = QtWidgets.QPushButton("Start Download")
-        self.start_button.clicked.connect(self.start_download)
-        self.cancel_button = QtWidgets.QPushButton("Cancel Download")
-        self.cancel_button.clicked.connect(self.cancel_download)
-        layout.addWidget(self.start_button)
-        layout.addWidget(self.cancel_button)
+        options_layout.addWidget(self.gotify_checkbox)
+        options_group.setLayout(options_layout)
+        main_layout.addWidget(options_group)
 
-        # Status output
-        self.status_output = QtWidgets.QTextEdit()
+        # =========================
+        # Controls
+        # =========================
+        controls_layout = QHBoxLayout()
+
+        self.start_btn = QPushButton("Download")
+        self.start_btn.setIcon(self.style().standardIcon(QStyle.SP_ArrowDown))
+        self.start_btn.clicked.connect(self.start_download)
+
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserStop))
+        self.cancel_btn.clicked.connect(self.cancel_download)
+        self.cancel_btn.setEnabled(False)
+
+        controls_layout.addWidget(self.start_btn)
+        controls_layout.addWidget(self.cancel_btn)
+        main_layout.addLayout(controls_layout)
+
+        # =========================
+        # Status
+        # =========================
+        status_group = QGroupBox("Status")
+        status_layout = QVBoxLayout()
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        status_layout.addWidget(self.progress_bar)
+
+        self.status_output = QTextEdit()
         self.status_output.setReadOnly(True)
-        layout.addWidget(QtWidgets.QLabel("Status:"))
-        layout.addWidget(self.status_output)
+        status_layout.addWidget(self.status_output)
 
-        self.setLayout(layout)
+        status_group.setLayout(status_layout)
+        main_layout.addWidget(status_group)
 
-    # -----------------
-    # Callbacks / slots
-    # -----------------
+        self.setLayout(main_layout)
+
+    # =========================
+    # Actions
+    # =========================
     def browse_directory(self):
-        dir_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Directory")
-        if dir_path:
-            self.dir_input.setText(dir_path)
+        path = QFileDialog.getExistingDirectory(self, "Select Video Directory")
+        if path:
+            self.dir_input.setText(path)
 
     def start_download(self):
         url = self.url_input.text().strip()
-        out_dir = self.dir_input.text().strip()
-        send_gotify = self.gotify_checkbox.isChecked()
-
         if not url:
-            QtWidgets.QMessageBox.warning(self, "Error", "Please enter a URL.")
+            self.append_status("Please enter a URL.")
             return
 
-        self.start_button.setEnabled(False)
+        self._set_progress(0)
+        self.toggle_controls(False)
         self.status_output.clear()
-        self.append_status(f"Starting download: {url}")
 
         self.controller.start_download(
             url=url,
-            output_dir=out_dir,
-            send_notification=send_gotify,
+            output_dir=self.dir_input.text(),
+            send_notification=self.gotify_checkbox.isChecked(),
             progress_callback=self.append_status,
             finished_callback=self.download_finished
         )
 
     def cancel_download(self):
         self.controller.cancel_download()
-        self.append_status("Download cancelled by user.")
-        self.start_button.setEnabled(True)
+        self.append_status("Download cancelled.")
+        self.toggle_controls(True)
 
+    # =========================
+    # Thread-safe UI helpers
+    # =========================
     def append_status(self, msg):
+        self.update_progress_from_line(msg)
         QtCore.QMetaObject.invokeMethod(
             self.status_output,
             "append",
@@ -94,9 +147,29 @@ class VideoTab(QtWidgets.QWidget):
             QtCore.Q_ARG(str, msg)
         )
 
+    def update_progress_from_line(self, line):
+        if "%" in line:
+            try:
+                percent = int(float(line.split("%")[0].split()[-1]))
+                self._set_progress(percent)
+            except Exception:
+                pass
+
+    def _set_progress(self, value: int):
+        QtCore.QMetaObject.invokeMethod(
+            self.progress_bar,
+            "setValue",
+            QtCore.Qt.QueuedConnection,
+            QtCore.Q_ARG(int, value)
+        )
+
     def download_finished(self, success):
-        if success:
-            self.append_status("Download completed successfully!")
-        else:
-            self.append_status("Download finished with errors or cancelled.")
-        self.start_button.setEnabled(True)
+        self._set_progress(100 if success else 0)
+        self.append_status("Finished." if success else "Finished with errors.")
+        self.toggle_controls(True)
+
+    def toggle_controls(self, enabled):
+        self.start_btn.setEnabled(enabled)
+        self.cancel_btn.setEnabled(not enabled)
+        self.url_input.setEnabled(enabled)
+        self.dir_input.setEnabled(enabled)
