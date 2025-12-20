@@ -24,6 +24,25 @@ Download the latest binary from **GitHub Releases**.
 chmod +x seadog-v1.0.0-linux-x86_64
 ./seadog-v1.0.0-linux-x86_64
 ```
+## Upcoming Features
+
+- Adjustable delay between playlist items to reduce rate-limiting risk
+- YouTube and YouTube Music playlist monitoring
+- Windows build
+- Additional user-configurable UI options
+- Display cover art / posters during downloads
+
+## Screenshots
+
+### Music Downloader
+![Music Tab](screenshots/musictab.png)
+
+### Video Downloader
+![Video Tab](screenshots/videotab.png)
+
+### Settings
+![Settings Tab](screenshots/settingstab.png)
+
 
 ### For Developers
 ```bash
@@ -32,3 +51,5 @@ source venv/bin/activate
 pip install -r requirements.txt
 python main.py
 ```
+
+
