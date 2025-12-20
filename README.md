@@ -26,6 +26,7 @@ chmod +x seadog-v1.0.0-linux-x86_64
 ```
 ## Upcoming Features
 
+- A much improved UI (I know, it's ugly right now, but it works!)
 - Adjustable delay between playlist items to reduce rate-limiting risk
 - YouTube and YouTube Music playlist monitoring
 - Windows build
