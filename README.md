@@ -1,10 +1,28 @@
+# Project Seadog
+
+Seadog is a desktop GUI application for downloading music and videos  
+from YouTube using yt-dlp.
+
+## Features
+
+- Music downloads (MP3)
+- Video downloads
+- Playlist support
+- Configurable delay between playlist items
+- Optional Kid3 integration
+- Optional Gotify notifications
+- Dark mode UI
+- No terminal required
+
+## Installation (Linux)
+
+Download the latest binary from **GitHub Releases**.
+
+### To run
+
+```bash
 chmod +x seadog-v1.0.0-linux-x86_64
 ./seadog-v1.0.0-linux-x86_64
-
-
-
-
-
 
 
 For Developers...
