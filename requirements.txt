@@ -1,0 +1,8 @@
+PyQt5
+qdarkstyle
+yt-dlp
+requests
+mutagen
+pymediainfo
+validators
+kid3

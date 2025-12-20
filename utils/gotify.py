@@ -1,31 +1,30 @@
 import requests
 from utils.config import ConfigManager
 
-def send_gotify_notification(title: str, message: str, priority: int = 5):
-    """
-    Sends a Gotify notification using the token and URL in config.json.
-    """
-    config = ConfigManager()
-    gotify_url = config.get("gotify_url", "").rstrip("/")
-    gotify_token = config.get("gotify_token", "")
 
-    if not gotify_url or not gotify_token:
-        print("Gotify URL or token not set in config.")
+def send_gotify_notification(title: str, message: str):
+    config = ConfigManager()
+
+    if not config.get("gotify_enabled", False):
         return
+
+    url = config.get("gotify_url", "").rstrip("/")
+    token = config.get("gotify_token", "")
+
+    if not url or not token:
+        return
+
+    endpoint = f"{url}/message?token={token}"
 
     payload = {
         "title": title,
         "message": message,
-        "priority": priority
-    }
-
-    headers = {
-        "X-Gotify-Key": gotify_token,
-        "Content-Type": "application/json"
+        "priority": 5
     }
 
     try:
-        response = requests.post(f"{gotify_url}/message", json=payload, headers=headers, timeout=10)
+        response = requests.post(endpoint, json=payload, timeout=10)
         response.raise_for_status()
-    except Exception as e:
-        print(f"Failed to send Gotify notification: {e}")
+    except Exception:
+        # Intentionally silent — no secrets, no spam
+        pass
