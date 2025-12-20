@@ -6,3 +6,6 @@ __pycache__/
 *.sqlite3
 *.log
 config.json
+/dist
+/build
+*.spec
