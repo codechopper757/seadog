@@ -89,6 +89,10 @@ class VideoTab(QWidget):
         # =========================
         status_group = QGroupBox("Status")
         status_layout = QVBoxLayout()
+        clear_btn = QPushButton("Clear Status")
+        clear_btn.clicked.connect(self.clear_status)
+        status_layout.addWidget(clear_btn)
+
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
@@ -107,6 +111,11 @@ class VideoTab(QWidget):
     # =========================
     # Actions
     # =========================
+    def clear_status(self):
+        self.status_output.clear()
+        self._set_progress(0)
+
+
     def browse_directory(self):
         path = QFileDialog.getExistingDirectory(self, "Select Video Directory")
         if path:

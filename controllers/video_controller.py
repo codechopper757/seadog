@@ -31,14 +31,41 @@ class VideoController:
     # -----------------
     # Internal helper
     # -----------------
-    def _on_finished(self, success, output_dir, send_notification, user_finished_callback):
-        if send_notification:
-            title = "Video Download Completed" if success else "Video Download Failed"
-            message = f"Output directory: {output_dir}"
-            try:
-                send_gotify_notification(title, message)
-            except Exception as e:
-                print(f"Gotify notification failed: {e}")
+def _on_finished(self, success, output_dir, send_notification, user_finished_callback):
+    if send_notification:
+        try:
+            from utils.config import ConfigManager
 
-        if user_finished_callback:
-            user_finished_callback(success)
+            config = ConfigManager()
+
+            status = "Completed" if success else "Failed"
+
+            title_template = config.get(
+                "gotify_video_title_template",
+                "Video Download {status}"
+            )
+
+            message_template = config.get(
+                "gotify_video_message_template",
+                "Output directory: {output_dir}"
+            )
+
+            title = title_template.format(status=status)
+
+            message = message_template.format(
+                status=status,
+                output_dir=output_dir,
+                name=os.path.basename(output_dir)
+            )
+
+            send_gotify_notification(
+                title=title,
+                message=message,
+                priority=config.get("gotify_priority", 5)
+            )
+
+        except Exception as e:
+            print(f"Gotify notification failed: {e}")
+
+    if user_finished_callback:
+        user_finished_callback(success)

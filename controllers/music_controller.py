@@ -1,6 +1,6 @@
 from engine.downloader import Downloader
 from utils.config import ConfigManager
-
+from utils.gotify import send_gotify_notification
 class MusicController:
     def __init__(self):
         self.config = ConfigManager()
