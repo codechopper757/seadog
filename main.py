@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPalette, QColor, QIcon
 from PyQt5.QtCore import Qt
 
 APP_NAME = "SeaDog"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 
 
 def resource_path(relative_path):

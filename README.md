@@ -18,7 +18,7 @@ What to do?
 SeaDog will continue to work once yt-dlp regains access.
 
 ## Latest Release
-**v0.2.0** – Improved settings, notifications, and UI polish  
+**v0.2.1** – Just added an app icon 
 [Download](https://github.com/earache757/seadog/releases)
 
 ## Features
