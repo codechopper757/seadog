@@ -1,11 +1,25 @@
 import sys
+import os
 import argparse
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QIcon
 from PyQt5.QtCore import Qt
 
 APP_NAME = "SeaDog"
 APP_VERSION = "0.2.0"
+
+
+def resource_path(relative_path):
+    """
+    Get absolute path to resource.
+    Works for development and PyInstaller.
+    """
+    try:
+        base_path = sys._MEIPASS  # PyInstaller temp dir
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def apply_dark_theme(app: QApplication):
@@ -48,6 +62,10 @@ def main():
 
     app = QApplication(sys.argv)
 
+    # ✅ Set application icon
+    icon_path = resource_path("resources/icons/icon.png")
+    app.setWindowIcon(QIcon(icon_path))
+
     # ✅ Apply dark theme explicitly
     apply_dark_theme(app)
 
@@ -55,7 +73,8 @@ def main():
     from gui.main_window import MainWindow  # noqa
 
     window = MainWindow()
-    window.resize(1000, 700)  # sensible default
+    window.setWindowIcon(QIcon(icon_path))  # extra safety for some WMs
+    window.resize(1000, 700)
     window.show()
 
     sys.exit(app.exec_())
