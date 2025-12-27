@@ -62,13 +62,39 @@ class Downloader:
         # clear stop flag
         self._stop_event.clear()
 
+        # -----------------
+        # Build yt-dlp args
+        # -----------------
+        # Copy list so we don't mutate the caller's list
+        extra_args = list(extra_ytdlp_args) if extra_ytdlp_args else []
+
+        # Native yt-dlp playlist delay
+        if delay and delay > 0:
+            extra_args.extend([
+                "--sleep-interval", str(delay)
+            ])
+
+        # -----------------
+        # Start worker thread
+        # -----------------
         self._thread = threading.Thread(
             target=self._run,
-            args=(url, out_dir, mode, delay, retries, retry_delay, status_callback, finished_callback, extra_ytdlp_args),
+            args=(
+                url,
+                out_dir,
+                mode,
+                delay,
+                retries,
+                retry_delay,
+                status_callback,
+                finished_callback,
+                extra_args,   # ← pass modified args
+            ),
             daemon=True,
         )
         self._thread.start()
         return self._thread
+
 
     def stop(self):
         """

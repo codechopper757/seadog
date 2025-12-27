@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPalette, QColor, QIcon
 from PyQt5.QtCore import Qt
 
 APP_NAME = "SeaDog"
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.3.0"
 
 
 def resource_path(relative_path):
@@ -73,6 +73,8 @@ def main():
     from gui.main_window import MainWindow  # noqa
 
     window = MainWindow()
+    window.app_version = APP_VERSION
+
     window.setWindowIcon(QIcon(icon_path))  # extra safety for some WMs
     window.resize(1000, 700)
     window.show()
