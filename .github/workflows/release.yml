@@ -37,7 +37,12 @@ jobs:
             --add-data "resources/icons/icon.png:resources/icons" \
             main.py
 
+      - name: Rename binary with version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mv dist/seadog "dist/seadog-${VERSION}-linux-x86_64"
+
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/seadog
+          files: dist/seadog-*-linux-x86_64
