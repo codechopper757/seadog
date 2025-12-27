@@ -35,6 +35,11 @@ SeaDog will continue to work once yt-dlp regains access.
 
 Download the latest binary from **GitHub Releases**.
 
+### Optional Dependencies
+
+- **Kid3** – required only if "Open Kid3 after download" is enabled
+
+
 ### To run
 
 ```bash

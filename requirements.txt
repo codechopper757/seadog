@@ -5,4 +5,3 @@ requests
 mutagen
 pymediainfo
 validators
-kid3
