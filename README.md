@@ -38,8 +38,8 @@ Download the latest binary from **GitHub Releases**.
 ### To run
 
 ```bash
-chmod +x seadog-v0.2.0-linux-x86_64
-./seadog-v0.2.0-linux-x86_64
+chmod +x seadog-v0.2.1-linux-x86_64
+./seadog-v0.2.1-linux-x86_64
 ```
 ## Upcoming Features
 
