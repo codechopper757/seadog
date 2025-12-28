@@ -1,7 +1,7 @@
 # Project Seadog
 
 Seadog is a desktop GUI application for downloading music and videos  
-from YouTube using yt-dlp.
+from YouTube using yt-dlp. Currently linux only!
 
 ## **Important:** Playlist downloads may temporarily fail due to YouTube changes.
 
