@@ -18,7 +18,7 @@ What to do?
 SeaDog will continue to work once yt-dlp regains access.
 
 ## Latest Release
-**v0.2.1** – Just added an app icon 
+**v0.3.0** – The timer/delay logic for playlist downloads is now active.
 [Download](https://github.com/earache757/seadog/releases)
 
 ## Features
@@ -43,17 +43,16 @@ Download the latest binary from **GitHub Releases**.
 ### To run
 
 ```bash
-chmod +x seadog-v0.2.1-linux-x86_64
-./seadog-v0.2.1-linux-x86_64
+chmod +x seadog-v0.3.0-linux-x86_64
+./seadog-v0.3.0-linux-x86_64
 ```
 ## Upcoming Features
 
 - A much improved UI (I know, it's ugly right now, but it works!)
-- Configurable delay between playlist items
 - YouTube and YouTube Music playlist monitoring
-- Windows build
 - Additional user-configurable UI options
 - Display cover art / posters during downloads
+- Windows build
 
 ## Screenshots
 
