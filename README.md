@@ -20,7 +20,7 @@ What to do?
 SeaDog will continue to work once yt-dlp regains access.
 
 ## Latest Release
-**v0.3.1** – Minor changes to settings tab (removed Kid3, is not on Music Tab only).
+**v0.4.0** – Changed settings tab to remove gotify enable checkbox (moved to tabs), added gotify test button and added options for music and video quality.
 [Download](https://github.com/earache757/seadog/releases)
 
 ## Features
@@ -45,8 +45,8 @@ Download the latest binary from **GitHub Releases**.
 ### To run
 
 ```bash
-chmod +x seadog-v0.3.1-linux-x86_64
-./seadog-v0.3.1-linux-x86_64
+chmod +x seadog-v0.4.0-linux-x86_64
+./seadog-v0.4.0-linux-x86_64
 ```
 ## Upcoming Features
 
