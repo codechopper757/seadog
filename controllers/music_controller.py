@@ -1,17 +1,26 @@
 from engine.downloader import Downloader
 from utils.config import ConfigManager
 
+
 class MusicController:
     def __init__(self):
         self.config = ConfigManager()
         self.downloader = Downloader()
         self.current_thread = None
 
-    def start_download(self, url, output_dir=None, open_kid3=False, progress_callback=None, finished_callback=None):
+    def start_download(
+        self,
+        url,
+        output_dir=None,
+        open_kid3=False,
+        send_notification=False,
+        progress_callback=None,
+        finished_callback=None,
+    ):
         """
         Starts a background download using Downloader.
         """
-        if output_dir is None or output_dir.strip() == "":
+        if not output_dir or output_dir.strip() == "":
             output_dir = self.config.get("music_output_dir")
 
         # Playlist delay from config (default 0)
@@ -24,7 +33,13 @@ class MusicController:
             mode="audio",
             delay=delay,
             status_callback=progress_callback,
-            finished_callback=lambda ok: self._on_finished(ok, output_dir, open_kid3, finished_callback)
+            finished_callback=lambda ok: self._on_finished(
+                ok,
+                output_dir,
+                open_kid3,
+                send_notification,
+                finished_callback,
+            ),
         )
         return self.current_thread
 
@@ -35,9 +50,15 @@ class MusicController:
     # -----------------
     # Internal helper
     # -----------------
-    def _on_finished(self, success, output_dir, open_kid3, user_finished_callback):
+    def _on_finished(
+        self,
+        success,
+        output_dir,
+        open_kid3,
+        send_notification,
+        user_finished_callback,
+    ):
         if open_kid3 and success:
-            # open kid3 for the downloaded folder
             kid3_path = self.config.get("kid3_path", "kid3")
             try:
                 import subprocess

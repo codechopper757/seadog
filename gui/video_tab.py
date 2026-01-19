@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QTextEdit,
-    QGroupBox, QStyle, QProgressBar
+    QGroupBox, QStyle, QProgressBar, QRadioButton
+
 )
 from PyQt5 import QtCore
 from controllers.video_controller import VideoController
@@ -65,6 +66,26 @@ class VideoTab(QWidget):
         options_layout.addWidget(self.gotify_checkbox)
         options_group.setLayout(options_layout)
         main_layout.addWidget(options_group)
+        # =========================
+        # Video Quality
+        # =========================
+        quality_group = QGroupBox("Video Quality")
+        quality_layout = QVBoxLayout()
+
+        self.quality_best = QRadioButton("Best available")
+        self.quality_1080 = QRadioButton("1080p")
+        self.quality_720 = QRadioButton("720p")
+        self.quality_480 = QRadioButton("480p")
+
+        self.quality_best.setChecked(True)
+
+        quality_layout.addWidget(self.quality_best)
+        quality_layout.addWidget(self.quality_1080)
+        quality_layout.addWidget(self.quality_720)
+        quality_layout.addWidget(self.quality_480)
+
+        quality_group.setLayout(quality_layout)
+        main_layout.addWidget(quality_group)
 
         # =========================
         # Controls
@@ -111,6 +132,15 @@ class VideoTab(QWidget):
     # =========================
     # Actions
     # =========================
+    def get_video_quality(self):
+        if self.quality_1080.isChecked():
+            return "1080p"
+        if self.quality_720.isChecked():
+            return "720p"
+        if self.quality_480.isChecked():
+            return "480p"
+        return "best"
+
     def clear_status(self):
         self.status_output.clear()
         self._set_progress(0)
@@ -134,10 +164,12 @@ class VideoTab(QWidget):
         self.controller.start_download(
             url=url,
             output_dir=self.dir_input.text(),
+            video_quality=self.get_video_quality(),
             send_notification=self.gotify_checkbox.isChecked(),
             progress_callback=self.append_status,
-            finished_callback=self.download_finished
+            finished_callback=self.download_finished,
         )
+
 
     def cancel_download(self):
         self.controller.cancel_download()

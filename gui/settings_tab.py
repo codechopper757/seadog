@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QCheckBox, QFileDialog, QMessageBox,
+    QPushButton, QFileDialog, QMessageBox,
     QGroupBox, QSpinBox
 )
 from utils.config import ConfigManager
+from utils.gotify import test_gotify_notification
 import os
 
 
@@ -72,21 +73,13 @@ class SettingsTab(QWidget):
         main_layout.addWidget(playlist_group)
 
         # =========================
-        # Gotify Notifications
+        # Gotify Configuration
         # =========================
-        gotify_group = QGroupBox("Gotify Notifications")
+        gotify_group = QGroupBox("Gotify Configuration")
         gotify_layout = QVBoxLayout()
 
-        self.gotify_enabled_checkbox = QCheckBox("Enable Gotify notifications")
-        self.gotify_enabled_checkbox.stateChanged.connect(
-            self.toggle_gotify_fields
-        )
-        gotify_layout.addWidget(self.gotify_enabled_checkbox)
-
         self.gotify_url_input = QLineEdit()
-        self.gotify_url_input.setPlaceholderText(
-            "https://gotify.example.com"
-        )
+        self.gotify_url_input.setPlaceholderText("https://gotify.example.com")
         gotify_layout.addWidget(QLabel("Gotify Server URL:"))
         gotify_layout.addWidget(self.gotify_url_input)
 
@@ -95,6 +88,10 @@ class SettingsTab(QWidget):
         self.gotify_token_input.setEchoMode(QLineEdit.Password)
         gotify_layout.addWidget(QLabel("Gotify API Token:"))
         gotify_layout.addWidget(self.gotify_token_input)
+
+        test_btn = QPushButton("Send Test Notification")
+        test_btn.clicked.connect(self.test_gotify)
+        gotify_layout.addWidget(test_btn)
 
         gotify_group.setLayout(gotify_layout)
         main_layout.addWidget(gotify_group)
@@ -112,46 +109,60 @@ class SettingsTab(QWidget):
         self.load_settings()
 
     # =========================
-    # Helpers
+    # Actions
     # =========================
+    def test_gotify(self):
+        url = self.gotify_url_input.text().strip()
+        token = self.gotify_token_input.text().strip()
+
+        if not url or not token:
+            QMessageBox.warning(
+                self,
+                "Gotify Test",
+                "Please enter both Gotify server URL and token."
+            )
+            return
+
+        try:
+            test_gotify_notification(
+                title="SeaDog Test Notification",
+                message="This is a test notification from SeaDog.",
+                url=url,
+                token=token,
+            )
+            QMessageBox.information(
+                self,
+                "Gotify Test",
+                "Test notification sent successfully."
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Gotify Test Failed",
+                str(e)
+            )
+
     def browse_dir(self, line_edit):
         path = QFileDialog.getExistingDirectory(self, "Select Directory")
         if path:
             line_edit.setText(path)
 
-    def toggle_gotify_fields(self):
-        enabled = self.gotify_enabled_checkbox.isChecked()
-        self.gotify_url_input.setEnabled(enabled)
-        self.gotify_token_input.setEnabled(enabled)
-
     def load_settings(self):
         self.music_dir_input.setText(
-            self.config.get(
-                "music_output_dir",
-                os.path.expanduser("~/Music")
-            )
+            self.config.get("music_output_dir", os.path.expanduser("~/Music"))
         )
         self.video_dir_input.setText(
-            self.config.get(
-                "video_output_dir",
-                os.path.expanduser("~/Videos")
-            )
+            self.config.get("video_output_dir", os.path.expanduser("~/Videos"))
         )
-
         self.playlist_delay_spin.setValue(
             self.config.get("playlist_delay", 0)
         )
-
-        gotify_enabled = self.config.get("gotify_enabled", False)
-        self.gotify_enabled_checkbox.setChecked(gotify_enabled)
         self.gotify_url_input.setText(
             self.config.get("gotify_url", "")
         )
         self.gotify_token_input.setText(
             self.config.get("gotify_token", "")
         )
-
-        self.toggle_gotify_fields()
 
     def save_settings(self):
         self.config.set(
@@ -165,11 +176,6 @@ class SettingsTab(QWidget):
         self.config.set(
             "playlist_delay",
             self.playlist_delay_spin.value()
-        )
-
-        self.config.set(
-            "gotify_enabled",
-            self.gotify_enabled_checkbox.isChecked()
         )
         self.config.set(
             "gotify_url",

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QTextEdit,
-    QGroupBox, QStyle, QProgressBar
+    QGroupBox, QStyle, QProgressBar, QRadioButton
 )
 from PyQt5 import QtCore
 from controllers.music_controller import MusicController
@@ -62,9 +62,34 @@ class MusicTab(QWidget):
         self.kid3_checkbox = QCheckBox("Open Kid3 after download")
         self.kid3_checkbox.setChecked(True)
 
+        self.gotify_checkbox = QCheckBox("Send Gotify notification on completion")
+        self.gotify_checkbox.setChecked(True)
+
         options_layout.addWidget(self.kid3_checkbox)
+        options_layout.addWidget(self.gotify_checkbox)
+
         options_group.setLayout(options_layout)
         main_layout.addWidget(options_group)
+
+
+        # =========================
+        # Audio Quality
+        # =========================
+        quality_group = QGroupBox("Audio Quality")
+        quality_layout = QVBoxLayout()
+
+        self.quality_high = QRadioButton("High (320 kbps)")
+        self.quality_medium = QRadioButton("Medium (192 kbps)")
+        self.quality_low = QRadioButton("Low (128 kbps)")
+
+        self.quality_high.setChecked(True)  # default
+
+        quality_layout.addWidget(self.quality_high)
+        quality_layout.addWidget(self.quality_medium)
+        quality_layout.addWidget(self.quality_low)
+
+        quality_group.setLayout(quality_layout)
+        main_layout.addWidget(quality_group)
 
         # =========================
         # Controls
@@ -89,14 +114,9 @@ class MusicTab(QWidget):
         # =========================
         status_group = QGroupBox("Status")
         status_layout = QVBoxLayout()
-        clear_btn = QPushButton("Clear Status")
-        clear_btn.clicked.connect(self.clear_status)
-        status_layout.addWidget(clear_btn)
-
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
         status_layout.addWidget(self.progress_bar)
 
         self.status_output = QTextEdit()
@@ -106,15 +126,19 @@ class MusicTab(QWidget):
         status_group.setLayout(status_layout)
         main_layout.addWidget(status_group)
 
-        self.setLayout(main_layout)
+    # =========================
+    # Helpers
+    # =========================
+    def get_audio_quality(self) -> str:
+        if self.quality_medium.isChecked():
+            return "5"
+        if self.quality_low.isChecked():
+            return "9"
+        return "0"  # High default
 
     # =========================
     # Actions
     # =========================
-    def clear_status(self):
-        self.status_output.clear()
-        self._set_progress(0)
-
     def browse_directory(self):
         path = QFileDialog.getExistingDirectory(self, "Select Music Directory")
         if path:
@@ -126,14 +150,15 @@ class MusicTab(QWidget):
             self.append_status("Please enter a URL.")
             return
 
-        self._set_progress(0)
-        self.toggle_controls(False)
+        self.progress_bar.setValue(0)
         self.status_output.clear()
+        self.toggle_controls(False)
 
         self.controller.start_download(
             url=url,
             output_dir=self.dir_input.text(),
             open_kid3=self.kid3_checkbox.isChecked(),
+            audio_quality=self.get_audio_quality(),
             progress_callback=self.append_status,
             finished_callback=self.download_finished
         )
@@ -147,7 +172,6 @@ class MusicTab(QWidget):
     # Thread-safe UI helpers
     # =========================
     def append_status(self, msg):
-        self.update_progress_from_line(msg)
         QtCore.QMetaObject.invokeMethod(
             self.status_output,
             "append",
@@ -155,24 +179,8 @@ class MusicTab(QWidget):
             QtCore.Q_ARG(str, msg)
         )
 
-    def update_progress_from_line(self, line):
-        if "%" in line:
-            try:
-                percent = int(float(line.split("%")[0].split()[-1]))
-                self._set_progress(percent)
-            except Exception:
-                pass
-
-    def _set_progress(self, value: int):
-        QtCore.QMetaObject.invokeMethod(
-            self.progress_bar,
-            "setValue",
-            QtCore.Qt.QueuedConnection,
-            QtCore.Q_ARG(int, value)
-        )
-
     def download_finished(self, success):
-        self._set_progress(100 if success else 0)
+        self.progress_bar.setValue(100 if success else 0)
         self.append_status("Finished." if success else "Finished with errors.")
         self.toggle_controls(True)
 
